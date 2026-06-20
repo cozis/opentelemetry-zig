@@ -20,7 +20,12 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
         .target = target,
     });
+    const zigmulator_dep = b.dependency("zigmulator", .{
+        .optimize = optimize,
+        .target = target,
+    });
     const otel_proto_mod = otel_pb_dep.module("opentelemetry-proto");
+    const zigmulator_mod = zigmulator_dep.module("zigmulator");
     const protobuf_mod = otel_pb_dep.builder.dependency("protobuf", .{
         .optimize = optimize,
         .target = target,
@@ -219,6 +224,22 @@ pub fn build(b: *std.Build) !void {
         write.addCopyFileToSource(merged, output_path);
         benchmarks_step.dependOn(&write.step);
     }
+
+    // Deterministic simulation smoke test.
+    const simulation_exe = b.addExecutable(.{
+        .name = "simulation",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("simulation_test/simulation.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "zigmulator", .module = zigmulator_mod },
+            },
+        }),
+    });
+    const run_simulation = b.addRunArtifact(simulation_exe);
+    const simulate_step = b.step("simulate", "Run the deterministic simulation smoke test");
+    simulate_step.dependOn(&run_simulation.step);
 
     // Integration tests step
     const integration_step = b.step("integration", "Run integration tests (requires Docker)");

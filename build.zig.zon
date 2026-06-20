@@ -42,6 +42,7 @@
         "src",
         "examples",
         "benchmarks",
+        "simulation_test",
         "LICENSE",
         "README.md",
     },
