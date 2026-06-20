@@ -31,8 +31,17 @@ fn metricsReproducer(init: std.process.Init) !void {
 }
 
 pub fn main(init: std.process.Init) !void {
+    // Back the simulator (and therefore the reproducer's `init.gpa`) with a
+    // DebugAllocator so any memory leaked by the temporality aggregator is
+    // reported once everything has been torn down.
+    var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
+    defer if (debug_allocator.deinit() == .leak) {
+        std.debug.print("LEAK DETECTED: metrics temporality reproducer leaked memory\n", .{});
+        std.process.exit(1);
+    };
+
     var sim: Simulator = undefined;
-    sim.init(std.heap.page_allocator, init.io, 0);
+    sim.init(debug_allocator.allocator(), init.io, 0);
     defer sim.deinit();
 
     try sim.addExecutable("metrics_reproducer", metricsReproducer);
@@ -53,6 +62,7 @@ fn recordAndCollect(
 
     const collected = try in_memory.fetch(allocator);
     defer allocator.free(collected);
+
     for (collected) |*measurement| {
         measurement.deinit(allocator);
     }
