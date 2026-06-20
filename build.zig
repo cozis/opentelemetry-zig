@@ -36,6 +36,21 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
         .link_libc = true,
     });
+    const simulation_clock_mod = b.createModule(.{
+        .root_source_file = b.path("simulation_test/clock.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    const simulation_sdk_mod = b.createModule(.{
+        .root_source_file = b.path("src/sdk.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{
+            .{ .name = "protobuf", .module = protobuf_mod },
+            .{ .name = "opentelemetry-proto", .module = otel_proto_mod },
+            .{ .name = "clock", .module = simulation_clock_mod },
+        },
+    });
 
     // Modules section
     const sdk_mod = b.addModule("sdk", .{
@@ -57,6 +72,7 @@ pub fn build(b: *std.Build) !void {
         build_info.addOption([]const u8, "version", zon.version);
         build_info.addOption([]const u8, "name", @tagName(zon.name));
         sdk_mod.addOptions("build_info", build_info);
+        simulation_sdk_mod.addOptions("build_info", build_info);
     }
 
     // Static library for the OpenTelemetry SDK C users
@@ -234,6 +250,7 @@ pub fn build(b: *std.Build) !void {
             .optimize = optimize,
             .imports = &.{
                 .{ .name = "zigmulator", .module = zigmulator_mod },
+                .{ .name = "opentelemetry-sdk", .module = simulation_sdk_mod },
             },
         }),
     });
