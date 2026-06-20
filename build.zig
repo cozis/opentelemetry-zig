@@ -258,6 +258,25 @@ pub fn build(b: *std.Build) !void {
     const simulate_step = b.step("simulate", "Run the deterministic simulation smoke test");
     simulate_step.dependOn(&run_simulation.step);
 
+    const metrics_temporality_repro_exe = b.addExecutable(.{
+        .name = "reproduce-metrics-temporality-bug",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("simulation_test/reproduce_metrics_temporality_bug.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "zigmulator", .module = zigmulator_mod },
+                .{ .name = "opentelemetry-sdk", .module = simulation_sdk_mod },
+            },
+        }),
+    });
+    const run_metrics_temporality_repro = b.addRunArtifact(metrics_temporality_repro_exe);
+    const metrics_temporality_repro_step = b.step(
+        "repro-metrics-temporality-bug",
+        "Reproduce the metrics temporal aggregation lifetime bug",
+    );
+    metrics_temporality_repro_step.dependOn(&run_metrics_temporality_repro.step);
+
     // Integration tests step
     const integration_step = b.step("integration", "Run integration tests (requires Docker)");
     const integration_tests = buildIntegrationTests(b, b.path("integration_tests"), sdk_mod, clock_mod) catch |build_err| {
