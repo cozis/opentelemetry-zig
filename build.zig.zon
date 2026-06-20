@@ -31,6 +31,10 @@
             .url = "git+https://github.com/zig-o11y/opentelemetry-proto?ref=main#c43bd4c4db96fd839c594b7b701b44866b19457e",
             .hash = "opentelemetry_proto-1.10.3-S4Y0u6zjAgBXl5JQ75DnsV5L2DsJeRzbgbYLSDTkl-f9",
         },
+        .zigmulator = .{
+            .url = "git+https://github.com/cozis/Zigmulator#70256439542da356564eafe2a4c63a9c48422181",
+            .hash = "zigmulator-0.1.0-n9nz9nLkAwDpnzYG5E0rNqRKJ-HOBh9vDfHRfVQIwwaL",
+        },
     },
     .paths = .{
         "build.zig",
